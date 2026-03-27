@@ -30,6 +30,9 @@ export const generateMockData = (): NoteData[] => {
     data.push({
       id: `note-${i}`,
       title: `小红书优质笔记标题示例 ${i + 1}`,
+      content: `这是一篇关于${topics[Math.floor(Math.random() * topics.length)]}的小红书笔记内容示例。在这里分享一些心得体会和实用建议，希望对大家有所帮助！#${topics[Math.floor(Math.random() * topics.length)]} #生活方式`,
+      author: `博主_${i + 1}`,
+      imageUrl: `https://picsum.photos/seed/note-${i}/400/600`,
       publishDate,
       likes,
       collections,

@@ -130,6 +130,8 @@ export default function App() {
   const [filterDays, setFilterDays] = useState<number>(30);
   const [geoJson, setGeoJson] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hoveredNote, setHoveredNote] = useState<NoteData | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize with mock data
@@ -207,10 +209,16 @@ export default function App() {
           const comments = parseNumber(findVal(['评论', 'comment']));
           const shares = parseNumber(findVal(['分享', 'share']));
           const topicsRaw = findVal(['话题', 'topic', '标签', 'tag']);
+          const content = String(findVal(['正文', '内容', 'content', 'body']) || '');
+          const author = String(findVal(['作者', '博主', 'author', 'nickname', '昵称']) || '未知博主');
+          const imageUrl = String(findVal(['图片', '封面', 'image', 'cover', 'url']) || `https://picsum.photos/seed/note-${idx}/400/600`);
           
           return {
             id: `note-${idx}-${Date.now()}`,
-            title: String(findVal(['标题', 'title', '内容']) || '无标题'),
+            title: String(findVal(['标题', 'title']) || '无标题'),
+            content,
+            author,
+            imageUrl,
             publishDate: parseDate(findVal(['日期', 'date', '时间', '发布'])),
             likes,
             collections,
@@ -627,7 +635,18 @@ export default function App() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {topNotes.map((note, idx) => (
-                  <tr key={note.id} className="hover:bg-gray-50 transition-colors group">
+                  <tr 
+                    key={note.id} 
+                    className="hover:bg-gray-50 transition-colors group cursor-pointer"
+                    onMouseEnter={(e) => {
+                      setHoveredNote(note);
+                      setMousePos({ x: e.clientX, y: e.clientY });
+                    }}
+                    onMouseMove={(e) => {
+                      setMousePos({ x: e.clientX, y: e.clientY });
+                    }}
+                    onMouseLeave={() => setHoveredNote(null)}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
@@ -673,6 +692,79 @@ export default function App() {
       <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 pt-8 border-t border-gray-200 text-center text-gray-400 text-sm">
         <p>© 2026 小红书数据分析看板 · 专业数据可视化工具</p>
       </footer>
+
+      {/* Note Preview Pop-up */}
+      <AnimatePresence>
+        {hoveredNote && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+            className="fixed z-[100] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex w-[500px] h-[320px] pointer-events-none"
+            style={{
+              left: Math.min(mousePos.x + 20, window.innerWidth - 520),
+              top: Math.min(mousePos.y - 160, window.innerHeight - 340),
+            }}
+          >
+            {/* Left: Image */}
+            <div className="w-2/5 h-full relative overflow-hidden bg-gray-100">
+              <img 
+                src={hoveredNote.imageUrl} 
+                alt={hoveredNote.title}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute top-3 left-3">
+                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase shadow-sm ${
+                  hoveredNote.type === '视频' ? 'bg-purple-600 text-white' : 'bg-[#FF2442] text-white'
+                }`}>
+                  {hoveredNote.type}
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Content */}
+            <div className="w-3/5 p-5 flex flex-col h-full">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+                  <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${hoveredNote.author}`} alt="avatar" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-gray-900 leading-tight">{hoveredNote.author}</span>
+                  <span className="text-[10px] text-gray-400">{format(hoveredNote.publishDate, 'yyyy-MM-dd')} · {hoveredNote.ipAddress}</span>
+                </div>
+              </div>
+
+              <h4 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 leading-snug">
+                {hoveredNote.title}
+              </h4>
+              
+              <p className="text-xs text-gray-600 mb-4 line-clamp-4 leading-relaxed flex-grow">
+                {hoveredNote.content || '暂无正文内容...'}
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 mb-4">
+                {hoveredNote.topics.slice(0, 3).map((topic, i) => (
+                  <span key={i} className="text-[10px] text-blue-500 font-medium">#{topic}</span>
+                ))}
+              </div>
+
+              <div className="pt-4 border-t border-gray-50 flex items-center justify-between text-gray-400">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp size={14} className="text-[#FF2442]" />
+                    <span className="text-xs font-bold text-gray-700">{hoveredNote.totalInteractions.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-[10px]">
+                  <span>赞 {hoveredNote.likes}</span>
+                  <span>藏 {hoveredNote.collections}</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
