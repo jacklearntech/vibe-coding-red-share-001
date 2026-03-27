@@ -1,0 +1,5 @@
+{
+  "name": "小红书数据分析看板",
+  "description": "专业的小红书账号数据可视化分析工具，支持CSV上传、趋势分析、地域分布及话题洞察。",
+  "requestFramePermissions": []
+}
