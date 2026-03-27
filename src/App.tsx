@@ -56,7 +56,16 @@ const PROVINCE_MAPPING: Record<string, string> = {
 
 const normalizeProvince = (name: string): string => {
   if (!name || name === '未知') return '未知';
-  // Remove common suffixes first to get clean name
+  
+  // Try to find if any province name is contained within the input string
+  const provinceNames = Object.keys(PROVINCE_MAPPING);
+  const found = provinceNames.find(p => name.includes(p));
+  
+  if (found) {
+    return PROVINCE_MAPPING[found];
+  }
+  
+  // Fallback: Remove common suffixes first to get clean name
   const cleanName = name.replace(/(省|市|自治区|特别行政区|壮族|回族|维吾尔)/g, '');
   // Map back to standard GeoJSON names
   return PROVINCE_MAPPING[cleanName] || name;
@@ -316,13 +325,21 @@ export default function App() {
       }
     });
 
-    const mapData = Object.entries(ipCounts).map(([name, value]) => ({ 
-      name, 
-      value: Number(value) || 0 
-    }));
+    const mapData: { name: string; value: number }[] = [];
+    Object.entries(ipCounts).forEach(([name, value]) => {
+      const val = Number(value) || 0;
+      // Add the original name (usually full name from normalizeProvince)
+      mapData.push({ name, value: val });
+      
+      // Also add the short name (without "省", "市", etc.) to match GeoJSONs that use short names
+      const shortName = name.replace(/(省|市|自治区|特别行政区|壮族|回族|维吾尔)/g, '');
+      if (shortName !== name) {
+        mapData.push({ name: shortName, value: val });
+      }
+    });
 
     const values = mapData.map(d => d.value).filter(v => typeof v === 'number' && !isNaN(v));
-    const maxVal = values.length > 0 ? Math.max(...values) : 1;
+    const maxVal = values.length > 0 ? Math.max(...values, 1) : 1;
 
     return {
       tooltip: { 
