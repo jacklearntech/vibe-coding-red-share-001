@@ -260,15 +260,31 @@ export default function App() {
         filterDays <= 30 ? isSameDay(item.publishDate, d) : isSameMonth(item.publishDate, d)
       ).length
     );
-    const interactionCounts = intervals.map(d => 
+    
+    const likeCounts = intervals.map(d => 
       filteredData
         .filter(item => filterDays <= 30 ? isSameDay(item.publishDate, d) : isSameMonth(item.publishDate, d))
-        .reduce((sum, item) => sum + item.totalInteractions, 0)
+        .reduce((sum, item) => sum + item.likes, 0)
+    );
+    const collectionCounts = intervals.map(d => 
+      filteredData
+        .filter(item => filterDays <= 30 ? isSameDay(item.publishDate, d) : isSameMonth(item.publishDate, d))
+        .reduce((sum, item) => sum + item.collections, 0)
+    );
+    const commentCounts = intervals.map(d => 
+      filteredData
+        .filter(item => filterDays <= 30 ? isSameDay(item.publishDate, d) : isSameMonth(item.publishDate, d))
+        .reduce((sum, item) => sum + item.comments, 0)
+    );
+    const shareCounts = intervals.map(d => 
+      filteredData
+        .filter(item => filterDays <= 30 ? isSameDay(item.publishDate, d) : isSameMonth(item.publishDate, d))
+        .reduce((sum, item) => sum + item.shares, 0)
     );
 
     return {
       tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
-      legend: { data: ['发文数量', '互动总量'], bottom: 0 },
+      legend: { data: ['发文数量', '点赞', '收藏', '评论', '分享'], bottom: 0 },
       grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
       xAxis: { type: 'category', data: labels, axisLabel: { interval: filterDays > 30 ? 0 : 'auto' } },
       yAxis: [
@@ -277,7 +293,10 @@ export default function App() {
       ],
       series: [
         { name: '发文数量', type: 'bar', data: noteCounts, itemStyle: { color: '#FF2442' } },
-        { name: '互动总量', type: 'line', yAxisIndex: 1, data: interactionCounts, smooth: true, lineStyle: { color: '#3B82F6' }, itemStyle: { color: '#3B82F6' } }
+        { name: '点赞', type: 'line', yAxisIndex: 1, data: likeCounts, smooth: true, lineStyle: { color: '#3B82F6' }, itemStyle: { color: '#3B82F6' } },
+        { name: '收藏', type: 'line', yAxisIndex: 1, data: collectionCounts, smooth: true, lineStyle: { color: '#10B981' }, itemStyle: { color: '#10B981' } },
+        { name: '评论', type: 'line', yAxisIndex: 1, data: commentCounts, smooth: true, lineStyle: { color: '#F59E0B' }, itemStyle: { color: '#F59E0B' } },
+        { name: '分享', type: 'line', yAxisIndex: 1, data: shareCounts, smooth: true, lineStyle: { color: '#8B5CF6' }, itemStyle: { color: '#8B5CF6' } }
       ]
     };
   }, [filteredData, filterDays]);
@@ -419,6 +438,10 @@ export default function App() {
   const stats = useMemo(() => ({
     totalNotes: filteredData.length,
     totalInteractions: filteredData.reduce((sum, i) => sum + i.totalInteractions, 0),
+    totalLikes: filteredData.reduce((sum, i) => sum + i.likes, 0),
+    totalCollections: filteredData.reduce((sum, i) => sum + i.collections, 0),
+    totalComments: filteredData.reduce((sum, i) => sum + i.comments, 0),
+    totalShares: filteredData.reduce((sum, i) => sum + i.shares, 0),
     videoCount: filteredData.filter(i => i.type === '视频').length,
     imageCount: filteredData.filter(i => i.type === '图文').length,
   }), [filteredData]);
@@ -494,6 +517,26 @@ export default function App() {
             icon={PieChart} 
             color="bg-orange-500" 
           />
+        </div>
+
+        {/* Interaction Breakdown */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+            <span className="text-xs text-gray-400 font-medium mb-1">点赞</span>
+            <span className="text-lg font-bold text-blue-600">{stats.totalLikes.toLocaleString()}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+            <span className="text-xs text-gray-400 font-medium mb-1">收藏</span>
+            <span className="text-lg font-bold text-emerald-600">{stats.totalCollections.toLocaleString()}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+            <span className="text-xs text-gray-400 font-medium mb-1">评论</span>
+            <span className="text-lg font-bold text-amber-600">{stats.totalComments.toLocaleString()}</span>
+          </div>
+          <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
+            <span className="text-xs text-gray-400 font-medium mb-1">分享</span>
+            <span className="text-lg font-bold text-violet-600">{stats.totalShares.toLocaleString()}</span>
+          </div>
         </div>
 
         {/* Charts Grid */}
