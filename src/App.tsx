@@ -30,7 +30,10 @@ import {
   Video,
   ChevronRight,
   Download,
-  Info
+  Info,
+  LogOut,
+  User,
+  Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -109,6 +112,94 @@ const parseDate = (val: any): Date => {
 
 // --- Components ---
 
+const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (username === 'demouser' && password === 'demopw') {
+      onLogin();
+    } else {
+      setError('用户名或密码错误');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FA] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 w-full max-w-md"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="bg-[#FF2442] p-4 rounded-2xl mb-4 shadow-lg shadow-red-100">
+            <TrendingUp size={32} className="text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">小红书数据看板</h1>
+          <p className="text-gray-500 text-sm mt-2">请登录以访问您的数据分析</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">用户名</label>
+            <div className="relative">
+              <User size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                type="text" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="demouser"
+                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF2442]/20 focus:border-[#FF2442] transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">密码</label>
+            <div className="relative">
+              <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="demopw"
+                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF2442]/20 focus:border-[#FF2442] transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {error && (
+            <motion.p 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-red-500 text-xs font-medium ml-1"
+            >
+              {error}
+            </motion.p>
+          )}
+
+          <button 
+            type="submit"
+            className="w-full bg-[#FF2442] hover:bg-[#E01F3A] text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-100 transition-all active:scale-[0.98]"
+          >
+            立即登录
+          </button>
+        </form>
+
+        <div className="mt-8 pt-6 border-t border-gray-50 text-center">
+          <p className="text-xs text-gray-400">
+            提示：用户名 <span className="text-gray-600 font-mono">demouser</span> 密码 <span className="text-gray-600 font-mono">demopw</span>
+          </p>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: string | number, icon: any, color: string }) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
@@ -126,6 +217,9 @@ const StatCard = ({ title, value, icon: Icon, color }: { title: string, value: s
 );
 
 export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
+    return localStorage.getItem('isLoggedIn') === 'true';
+  });
   const [data, setData] = useState<NoteData[]>([]);
   const [filterDays, setFilterDays] = useState<number>(30);
   const [geoJson, setGeoJson] = useState<any>(null);
@@ -246,6 +340,16 @@ export default function App() {
       }
     };
     reader.readAsArrayBuffer(file);
+  };
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    localStorage.setItem('isLoggedIn', 'true');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    localStorage.removeItem('isLoggedIn');
   };
 
   // --- Chart Options ---
@@ -454,6 +558,10 @@ export default function App() {
     imageCount: filteredData.filter(i => i.type === '图文').length,
   }), [filteredData]);
 
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#F8F9FA] text-gray-900 font-sans pb-12">
       {/* Header */}
@@ -494,6 +602,14 @@ export default function App() {
                 onChange={handleFileUpload} 
               />
             </label>
+
+            <button 
+              onClick={handleLogout}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+              title="退出登录"
+            >
+              <LogOut size={20} />
+            </button>
           </div>
         </div>
       </header>
